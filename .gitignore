@@ -1,0 +1,4 @@
+/market_data/unzip_data
+/market_data/zip_data
+__pycache__/
+.env
