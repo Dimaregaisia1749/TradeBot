@@ -2,12 +2,14 @@ import logging
 import os
 from datetime import datetime
 from decimal import Decimal
+from dotenv import load_dotenv
 
 from tinkoff.invest import MoneyValue
 from tinkoff.invest.sandbox.client import SandboxClient
 from tinkoff.invest.utils import decimal_to_quotation
 
-TOKEN = os.environ["TOKEN"]
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
 
 logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)

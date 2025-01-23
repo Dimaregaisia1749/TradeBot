@@ -1,6 +1,8 @@
 import json
 from pandas import DataFrame
 
+from dotenv import load_dotenv
+
 import asyncio
 import logging
 import os
@@ -13,8 +15,10 @@ from tinkoff.invest.constants import INVEST_GRPC_API, INVEST_GRPC_API_SANDBOX
 from tinkoff.invest.async_services import AsyncServices
 from tinkoff.invest.utils import now, quotation_to_decimal
 
-TOKEN = os.environ["TOKEN"]
-IS_SANDBOX = os.environ["SANDBOX"]
+
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
+IS_SANDBOX = os.getenv("SANDBOX")
 
 logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
