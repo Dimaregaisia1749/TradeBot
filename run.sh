@@ -1,11 +1,15 @@
 #!/bin/bash
 
 start() {
-    python -m app.main
+    python app/main.py
 }
 
 display_stats() {
     python tools/display_stats.py
+}
+
+sandbox() {
+    python app/sandbox/sandbox.py
 }
 
 download_data() {
@@ -24,6 +28,9 @@ case "$1" in
     display_stats)
         display_stats
         ;;
+    sandbox)
+        sandbox
+        ;;
     download)
         download_data
         ;;
@@ -31,7 +38,7 @@ case "$1" in
         delete_data
         ;;
     *)
-        echo "Params: $0 {start|display_stats|download|delete_data}"
+        echo "Params: $0 {start|display_stats|sandbox|download|delete_data}"
         ;;
 esac
 

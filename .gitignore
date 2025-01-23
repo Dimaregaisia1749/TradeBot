@@ -2,3 +2,4 @@
 /market_data/zip_data
 __pycache__/
 .env
+.venv/
