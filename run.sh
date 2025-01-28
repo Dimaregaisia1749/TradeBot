@@ -1,4 +1,5 @@
 #!/bin/bash
+export PYTHONPATH=$(pwd)
 
 start() {
     python app/main.py

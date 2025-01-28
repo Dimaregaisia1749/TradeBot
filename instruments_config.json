@@ -1,6 +1,12 @@
 {
     "instruments": {
-        "sber": "BBG004730N88",
-        "vtbr": "BBG004730ZJ9"
+        "sber": {
+            "figi": "BBG004730N88",
+            "strategy": "abc"
+        },
+        "vtbr": {
+            "figi": "BBG004730ZJ9",
+            "strategy": "abc"
+        }
     }
 }

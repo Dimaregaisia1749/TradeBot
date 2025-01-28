@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from tinkoff.invest import MoneyValue
 from tinkoff.invest.sandbox.client import SandboxClient
-from tinkoff.invest.utils import decimal_to_quotation
+from tinkoff.invest.utils import decimal_to_quotation, quotation_to_decimal
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -30,11 +30,9 @@ def main():
     How to open new sandbox account.
     """
     with SandboxClient(TOKEN) as client:
-        # get all sandbox accounts
         sandbox_account = client.users.get_accounts().accounts[0]
         print(sandbox_account)
         account_id = sandbox_account.id
-
         logger.info("orders: %s", client.orders.get_orders(account_id=account_id))
         logger.info(
             "positions: %s", client.operations.get_positions(account_id=account_id)
@@ -50,6 +48,26 @@ def main():
         logger.info(
             "withdraw_limits: %s",
             client.operations.get_withdraw_limits(account_id=account_id),
+        )
+        for pos in client.operations.get_portfolio(account_id=account_id).positions:
+            logger.info(
+                "Pos %s: %s Amount",
+                pos.figi,
+                int(quotation_to_decimal(pos.quantity))
+            )
+        for pos in client.operations.get_portfolio(account_id=account_id).positions:
+            logger.info(
+                "Pos %s: %s RUB",
+                pos.figi,
+                round(quotation_to_decimal(pos.current_price)*quotation_to_decimal(pos.quantity))
+            )
+        logger.info(
+            "Currencies: %s RUB",
+            round(quotation_to_decimal(client.operations.get_portfolio(account_id=account_id).total_amount_currencies))
+        )
+        logger.info(
+            "Total amount: %s RUB",
+            round(quotation_to_decimal(client.operations.get_portfolio(account_id=account_id).total_amount_portfolio))
         )
 
 
