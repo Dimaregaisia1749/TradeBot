@@ -128,19 +128,38 @@ class BaseStrategy:
         return 0
 
     async def sell_all(self):
-        #await self.client.cancel_all_orders(account_id=self.account_id)
-        logger.info("Cancel all orders. figi=%s", self.figi)
         amount = await self.get_position_quantity()
-
         if amount == 0:
             return
         await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=amount)
         logger.info("Sell position to zero. figi=%s amount=%s", self.figi, amount)
 
+    async def shutdown(self):
+        logger.info("Stop by signal")
+        trading_status = await self.client.market_data.get_trading_status(
+            figi=self.figi
+        )
+        if(
+            trading_status.market_order_available_flag
+            and trading_status.api_trade_available_flag
+        ):
+            await self.sell_all()
+        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+        [task.cancel() for task in tasks]
+        await asyncio.gather(*tasks, return_exceptions=True)
+        asyncio.get_running_loop().stop()
+        sys.exit(1)
+
+    def handle_signal(self, sig):
+        asyncio.create_task(self.shutdown())
+
     async def start(self):
         """
         Strategy starts from this function.
         """
+        signal.signal(signal.SIGINT, lambda s, f: self.handle_signal(s))
+        signal.signal(signal.SIGBREAK, lambda s, f: self.handle_signal(s))
+
         if self.account_id is None:
             try:
                 self.account_id = (
@@ -149,5 +168,4 @@ class BaseStrategy:
             except AioRequestError as are:
                 logger.error("Error taking account id. Stopping strategy. %s", are)
                 return
-        await self.sell_all()
         await self.main_cycle()
