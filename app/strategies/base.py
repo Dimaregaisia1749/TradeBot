@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import signal
-import sys
 from datetime import timedelta
 from typing import List, Optional
 
@@ -14,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class BaseStrategy:
     """
-    This class is responsible for a strategy.
+    Class for base instruments for strategy
     """
     def __init__(
         self,
@@ -80,8 +78,8 @@ class BaseStrategy:
         Get current price.
         """
         market_data = await self.client.market_data.get_last_prices(figi=[self.figi])
-        price = market_data.last_prices[0].price
-        return price.units + price.nano / 1e9
+        price = quotation_to_decimal(market_data.last_prices[0].price)
+        return price
     
     async def place_order(self, direction: OrderDirection, quantity:int):
         """
@@ -131,11 +129,13 @@ class BaseStrategy:
         amount = await self.get_position_quantity()
         if amount == 0:
             return
-        await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=amount)
+        await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=amount // self.lot)
         logger.info("Sell position to zero. figi=%s amount=%s", self.figi, amount)
 
     async def shutdown(self):
-        logger.info("Stop by signal")
+        """
+        Sell all positions to 0.
+        """
         trading_status = await self.client.market_data.get_trading_status(
             figi=self.figi
         )
@@ -144,22 +144,11 @@ class BaseStrategy:
             and trading_status.api_trade_available_flag
         ):
             await self.sell_all()
-        tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-        [task.cancel() for task in tasks]
-        await asyncio.gather(*tasks, return_exceptions=True)
-        asyncio.get_running_loop().stop()
-        sys.exit(1)
-
-    def handle_signal(self, sig):
-        asyncio.create_task(self.shutdown())
 
     async def start(self):
         """
         Strategy starts from this function.
         """
-        signal.signal(signal.SIGINT, lambda s, f: self.handle_signal(s))
-        signal.signal(signal.SIGBREAK, lambda s, f: self.handle_signal(s))
-
         if self.account_id is None:
             try:
                 self.account_id = (

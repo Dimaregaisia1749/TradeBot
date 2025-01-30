@@ -8,6 +8,9 @@ from tinkoff.invest import OrderDirection
 logger = logging.getLogger(__name__)
 
 class ABCStrategy(BaseStrategy):
+    """
+        Placeholder strategy.
+    """
     async def trade(self):
         """
         Decision maker.

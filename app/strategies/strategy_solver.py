@@ -17,9 +17,7 @@ strategies: Dict[str, BaseStrategy.__class__] = {
 def resolve_strategy(strategy_name: str, figi: str, *args, **kwargs) -> BaseStrategy:
     """
     Creates strategy instance by strategy name. Passes all arguments to strategy constructor.
-
-    :param strategy_name: the name of strategy. 
-    :param figi: the figi of the instrument strategy applied to.
+    
     :return: strategy instance.
     """
     if strategy_name not in strategies:

@@ -29,10 +29,11 @@ def main():
     How to get/close all sandbox accounts.
     How to open new sandbox account.
     """
-    with SandboxClient(TOKEN) as client:
+    with SandboxClient(TOKEN) as client:    
         sandbox_account = client.users.get_accounts().accounts[0]
         print(sandbox_account)
         account_id = sandbox_account.id
+        print(quotation_to_decimal(client.operations.get_portfolio(account_id=account_id).total_amount_portfolio))
         logger.info("orders: %s", client.orders.get_orders(account_id=account_id))
         logger.info(
             "positions: %s", client.operations.get_positions(account_id=account_id)
