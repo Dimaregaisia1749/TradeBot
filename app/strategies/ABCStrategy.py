@@ -21,7 +21,6 @@ class ABCStrategy(BaseStrategy):
         while True:
             await asyncio.sleep(60)
             curr_price = await self.get_price()
-            logger.info("Price. figi=%s price=%s", self.figi, curr_price)
             if curr_price > prev_price * 1.0005:
                 await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=1)
             elif curr_price < prev_price * 0.9995:

@@ -78,7 +78,7 @@ class BaseStrategy:
         Get current price.
         """
         market_data = await self.client.market_data.get_last_prices(figi=[self.figi])
-        price = quotation_to_decimal(market_data.last_prices[0].price)
+        price = float(quotation_to_decimal(market_data.last_prices[0].price))
         return price
     
     async def place_order(self, direction: OrderDirection, quantity:int):

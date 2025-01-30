@@ -21,11 +21,13 @@ class TradeAgent:
         self,
         token: str,
         is_sandbox: bool,
-        porfolio: list
+        porfolio: list,
+        path_to_logs: str,
     ):
         self.portfolio = porfolio
         self.TOKEN = token
         self.IS_SANDBOX = is_sandbox
+        self.PATH_TO_LOGS = path_to_logs
         self.strategies = []
         self.portfolio_logger = None
     
@@ -50,8 +52,12 @@ class TradeAgent:
         strategy for every ticker from portfolio.
         """
         target = INVEST_GRPC_API_SANDBOX if self.IS_SANDBOX else INVEST_GRPC_API 
+        if self.IS_SANDBOX:
+            logger.info("Start trade agent on sandbox account.")
+        else:
+            logger.info("Start trade agent on prod account.")
         async with AsyncClient(token=self.TOKEN, app_name="TinkoffApp", target=target) as client:
-            self.portfolio_logger = PortfolioLogger(check_interval=60, client=client)
+            self.portfolio_logger = PortfolioLogger(log_interval=60, client=client, path_to_logs=self.PATH_TO_LOGS)
             portfolio_logger_task = asyncio.create_task(self.portfolio_logger.start())
             strategy_tasks = []
             for instrument in portfolio:
@@ -94,3 +100,4 @@ class TradeAgent:
             )
         )
         loop.run_until_complete(task)
+        
