@@ -5,12 +5,12 @@ start() {
     python app/main.py
 }
 
-display_stats() {
-    python tools/display_stats.py
+view_stats() {
+    python tools/view_stats.py
 }
 
-sandbox() {
-    python app/sandbox/sandbox.py
+reset_sandbox() {
+    python app/sandbox/reset_sandbox.py
 }
 
 download_data() {
@@ -26,11 +26,11 @@ case "$1" in
     start)
         start
         ;;
-    display_stats)
-        display_stats
+    view_stats)
+        view_stats
         ;;
-    sandbox)
-        sandbox
+    reset_sandbox)
+        reset_sandbox
         ;;
     download)
         download_data
