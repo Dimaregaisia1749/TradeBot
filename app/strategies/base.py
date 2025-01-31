@@ -30,30 +30,6 @@ class BaseStrategy:
         self.lot = lot
         self.check_interval = check_interval
         self.client = client
-        self.candles: List[HistoricCandle] = []
-
-    async def get_historical_data(self):
-        """
-        Gets historical data for the instrument. Returns list of candles.
-        Requests all the candles of timeframe from days_back to now.
-
-        :return: list of HistoricCandle
-        """
-        logger.debug(
-            "Start getting historical data for %s days back from now. figi=%s",
-            self.days_back,
-            self.figi,
-        )
-        async for candle in self.client.get_all_candles(
-            figi=self.figi,
-            from_=now() - timedelta(days=self.days_back),
-            to=now(),
-            interval=self.timeframe,
-        ):
-            if candle not in self.candles:
-                if candle.is_complete:
-                    self.candles.append(candle)
-                    logger.debug("Found %s - figi=%s", candle, self.figi)
 
     async def ensure_market_open(self):
         """

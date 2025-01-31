@@ -22,7 +22,7 @@ class PortfolioLogger:
         path_to_logs: str,
     ):
         self.account_id = None
-        self.check_interval = log_interval
+        self.log_interval = log_interval
         self.client = client
         self.log_file = path_to_logs + 'portfolio_log.csv'
 
