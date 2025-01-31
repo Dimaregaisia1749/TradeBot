@@ -30,22 +30,23 @@ class PortfolioLogger:
         if not os.path.exists(self.log_file):
             with open(self.log_file, "w", newline="") as f:
                 writer = csv.writer(f)
-                writer.writerow(["timestamp", "balance", "portfolio_value", "expected_yield"])
+                writer.writerow(["timestamp", "balance", "portfolio_value", "total_amount_shares","expected_yield"])
 
     async def get_portfolio_data(self):
         portfolio = await self.client.operations.get_portfolio(account_id=self.account_id)
         balance = quotation_to_decimal(portfolio.total_amount_currencies)
         portfolio_value = quotation_to_decimal(portfolio.total_amount_portfolio)
         expected_yield = quotation_to_decimal(portfolio.expected_yield)
-        return balance, portfolio_value, expected_yield
+        total_amount_shares = quotation_to_decimal(portfolio.total_amount_shares)
+        return balance, portfolio_value, expected_yield, total_amount_shares
 
     
     async def log_portfolio(self):
-        balance, portfolio_value, expected_yield = await self.get_portfolio_data()
+        balance, portfolio_value, expected_yield, total_amount_shares = await self.get_portfolio_data()
         
         with open(self.log_file, "a", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow([datetime.now(), balance, portfolio_value, expected_yield])
+            writer.writerow([datetime.now(), balance, portfolio_value, total_amount_shares, expected_yield])
     
     async def main_cycle(self):
         while True:
