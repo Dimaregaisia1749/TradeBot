@@ -4,7 +4,7 @@ source ./.env
 
 figi_list=./market_data/figi.txt
 token=$TOKEN
-minimum_year=2017
+minimum_year=2023
 current_year=$(date +%Y)
 url=https://invest-public-api.tinkoff.ru/history-data
 
@@ -26,7 +26,8 @@ function download {
   echo "${url}?figi=${figi}&year=${year}"
   local response_code=$(curl -s --location "${url}?figi=${figi}&year=${year}" \
       -H "Authorization: Bearer ${token}" -o "${file_name}" -w '%{http_code}\n')
-  unzip -o "${file_name}" -d ./market_data/unzip_data
+  mkdir -p ./market_data/unzip_data/${figi}_${year}
+  unzip -o "${file_name}" -d ./market_data/unzip_data/${figi}_${year}
   # Если превышен лимит запросов в минуту (30) - повторяем запрос.
   if [ "$response_code" = "429" ]; then
       echo "rate limit exceed. sleep 5"

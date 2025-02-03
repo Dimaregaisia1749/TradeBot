@@ -17,7 +17,9 @@ logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=loggin
 logger = logging.getLogger(__name__)
 
 def add_money_sandbox(client, account_id, money, currency="rub"):
-    """Function to add money to sandbox account."""
+    """
+    Function to add money to sandbox account.
+    """
     money = decimal_to_quotation(Decimal(money))
     return client.sandbox.sandbox_pay_in(
         account_id=account_id,
