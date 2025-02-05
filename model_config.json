@@ -1,0 +1,15 @@
+{
+    "heads": 4,
+    "encoder_layers": 4,
+    "d_model": 1024,
+    "window_size": 180,
+    "batch_size": 64,
+    "data_dir": "market_data/unzip_data",
+    "max_samples_train": 100000,
+    "max_samples_test": 20000,
+    "years_train": [2023],
+    "years_test": [2024],
+    "max_epoch": 20,
+    "model_path": "model.pth", 
+    "is_preload": false
+}
