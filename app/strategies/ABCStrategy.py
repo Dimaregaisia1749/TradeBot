@@ -22,8 +22,8 @@ class ABCStrategy(BaseStrategy):
             await asyncio.sleep(60)
             curr_price = await self.get_price()
             if curr_price > prev_price * 1.0005:
-                await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=1)
+                await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=5)
             elif curr_price < prev_price * 0.9995:
-                await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=1)
+                await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=5)
 
             prev_price = curr_price

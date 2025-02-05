@@ -86,7 +86,7 @@ def create_portfolio_visualization(portfolio_df, trades_df):
 
     buys = trades_df[trades_df['type'] == 'BUY']
     sells = trades_df[trades_df['type'] == 'SELL']
-    
+        
     fig.add_trace(
         go.Scatter(
             x=buys['timestamp'],
@@ -113,7 +113,7 @@ def create_portfolio_visualization(portfolio_df, trades_df):
 
     #Balance
     fig.add_trace(
-        go.Bar(
+        go.Scatter(
             x=portfolio_df['timestamp'],
             y=portfolio_df['balance'],
             name="Баланс",

@@ -102,16 +102,6 @@ class BaseStrategy:
         return 0
 
     async def sell_all(self):
-        amount = await self.get_position_quantity()
-        if amount == 0:
-            return
-        await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=amount // self.lot)
-        logger.info("Sell position to zero. figi=%s amount=%s", self.figi, amount)
-
-    async def shutdown(self):
-        """
-        Sell all positions to 0.
-        """
         trading_status = await self.client.market_data.get_trading_status(
             figi=self.figi
         )
@@ -119,7 +109,17 @@ class BaseStrategy:
             trading_status.market_order_available_flag
             and trading_status.api_trade_available_flag
         ):
-            await self.sell_all()
+            amount = await self.get_position_quantity()
+            if amount == 0:
+                return
+            await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=amount // self.lot)
+            logger.info("Sell position to zero. figi=%s amount=%s", self.figi, amount)
+
+    async def shutdown(self):
+        """
+        Function on closing console
+        """
+        await self.sell_all()
 
     async def start(self):
         """
@@ -133,4 +133,5 @@ class BaseStrategy:
             except AioRequestError as are:
                 logger.error("Error taking account id. Stopping strategy. %s", are)
                 return
+        await self.sell_all()
         await self.main_cycle()
