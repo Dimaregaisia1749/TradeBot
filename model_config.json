@@ -6,9 +6,9 @@
     "batch_size": 64,
     "data_dir": "market_data/unzip_data",
     "max_samples_train": 100000,
-    "max_samples_test": 20000,
+    "max_samples_val": 20000,
     "years_train": [2023],
-    "years_test": [2024],
+    "years_val": [2024],
     "max_epoch": 20,
     "model_path": "model.pth", 
     "is_preload": false

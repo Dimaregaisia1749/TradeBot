@@ -6,3 +6,4 @@ __pycache__/
 logs/
 sandbox_logs/
 *.html
+checkpoints/
