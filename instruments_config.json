@@ -2,19 +2,11 @@
     "instruments": {
         "sber": {
             "figi": "BBG004730N88",
-            "strategy": "abc"
+            "strategy": "transformer"
         },
         "vtbr": {
             "figi": "BBG004730ZJ9",
-            "strategy": "abc"
-        },
-        "gazp": {
-            "figi": "BBG004730RP0",
-            "strategy": "abc"
-        },
-        "gmkn": {
-            "figi": "BBG00475KKY8",
-            "strategy": "abc"
+            "strategy": "transformer"
         }
     }
 }

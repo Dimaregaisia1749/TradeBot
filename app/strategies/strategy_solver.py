@@ -1,4 +1,5 @@
 from app.strategies.ABCStrategy import ABCStrategy
+from app.strategies.candle_transformer import TransformerStrategy
 from app.strategies.base import BaseStrategy
 
 from typing import Dict, AnyStr
@@ -12,6 +13,7 @@ class UnsupportedStrategyError(Exception):
 
 strategies: Dict[str, BaseStrategy.__class__] = {
     "abc": ABCStrategy,
+    "transformer": TransformerStrategy
 }
 
 def resolve_strategy(strategy_name: str, figi: str, *args, **kwargs) -> BaseStrategy:

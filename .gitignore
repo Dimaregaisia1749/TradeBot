@@ -7,3 +7,4 @@ logs/
 sandbox_logs/
 *.html
 checkpoints/
+market_data_cache
