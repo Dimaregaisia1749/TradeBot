@@ -16,7 +16,7 @@ from tinkoff.invest.caching.market_data_cache.cache import MarketDataCache
 from tinkoff.invest.caching.market_data_cache.cache_settings import (
     MarketDataCacheSettings,
 )
-from tinkoff.invest.utils import now
+from tinkoff.invest.utils import now, quotation_to_decimal
 
 from datetime import timedelta
 from pathlib import Path
@@ -103,6 +103,7 @@ class TransformerStrategy(BaseStrategy):
         model_dir = 'checkpoints/'
         self.MODEL_PATH = os.path.join(model_dir, 'best.tar')
         self.model = self.__init_model()
+        self.window_size = 240
         logger.info("Start TransformerStrategy. figi=%s", self.figi)
 
     def __init_model(self):
@@ -116,21 +117,63 @@ class TransformerStrategy(BaseStrategy):
             encoder_layers=encoder_layers, 
             d_model=d_model,
             ).to(device=device)
-        checkpoint = torch.load(self.MODEL_PATH, weights_only=True)
+        checkpoint = torch.load(self.MODEL_PATH, weights_only=True, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         return model
+    
+    def __form_df(self, candles):
+        candles_list = [
+            {
+                'utc': candle.time,
+                'open': float(quotation_to_decimal(candle.open)),
+                'high': float(quotation_to_decimal(candle.high)),
+                'low': float(quotation_to_decimal(candle.low)),
+                'close': float(quotation_to_decimal(candle.close)),
+                'volume': candle.volume,
+            }
+            for candle in candles
+        ]
+        df = pd.DataFrame(candles_list, columns=['utc', 'open', 'high', 'low', 'close', 'volume'])
+        df['utc'] = pd.to_datetime(df['utc'], utc=True)
+        df = df.set_index('utc')
+        df['hour'] = df.index.hour
+        df['day_of_week'] = df.index.day_of_week
+        df['minute'] = df.index.minute
+        return df
+
+    def __normalize(self, tensor):
+        mean = tensor[:, :-3].mean(dim=1, keepdim=True)
+        std = tensor[:, :-3].std(dim=1, keepdim=True)
+        epsilon = 1e-7
+        normalized_data = (tensor[:, :-3] - mean) / (std + epsilon)
+        normalized_data = torch.cat([normalized_data, tensor[:, -3:]], dim=-1)
+        normalized_data[..., -3] = normalized_data[..., -3] / 23
+        normalized_data[..., -2] = normalized_data[..., -2] / 6 
+        normalized_data[..., -1] = normalized_data[..., -1] / 59
+        return normalized_data, mean, std
 
     async def get_data(self):
+        candles = []
         async for candle in self.client.get_all_candles(
             figi=self.figi,
-            from_=now() - timedelta(hours=3),
+            from_=now() - timedelta(minutes=self.window_size),
             to=now(),
             interval=CandleInterval.CANDLE_INTERVAL_1_MIN,
         ):
-            print(candle.time, candle.is_complete)
+            candles.append(candle)
+        df = self.__form_df(candles=candles)
+        tensor = torch.tensor(df.values, dtype=torch.float32)
+        tensor, std, mean = self.__normalize(tensor[:-1, :])
+        tensor = tensor.unsqueeze(dim=0)
+        return tensor, std, mean
+
 
     async def trade(self):
         """
         Decision maker.
         """
-        asyncio.gather(self.get_data())
+        input, std, mean = await self.get_data()
+        self.model.eval()
+        output = self.model(input)
+        print(self.figi)
+        print(output)
