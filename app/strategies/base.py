@@ -87,8 +87,6 @@ class BaseStrategy:
                 await self.trade()
             except AioRequestError as are:
                 logger.error("Client error %s", are)
-
-            await asyncio.sleep(self.check_interval)
     
     async def get_position_quantity(self) -> int:
         """

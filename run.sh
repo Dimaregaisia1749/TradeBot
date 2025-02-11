@@ -39,7 +39,7 @@ case "$1" in
         delete_data
         ;;
     *)
-        echo "Params: $0 {start|display_stats|sandbox|download|delete_data}"
+        echo "Params: $0 {start|view_stats|sandbox|download|delete_data}"
         ;;
 esac
 

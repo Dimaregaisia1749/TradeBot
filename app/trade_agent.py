@@ -4,12 +4,13 @@ import logging
 import signal
 import sys
 
-from tinkoff.invest import AsyncClient, CandleInterval
+from tinkoff.invest import AsyncClient, CandleInterval, InstrumentIdType
 from tinkoff.invest.constants import INVEST_GRPC_API, INVEST_GRPC_API_SANDBOX 
-from tinkoff.invest import AsyncClient, InstrumentIdType
+from tinkoff.invest.utils import now
 
 from app.strategies.strategy_solver import resolve_strategy
 from app.portfolio_logger import PortfolioLogger
+
 
 logger = logging.getLogger(__name__)
 

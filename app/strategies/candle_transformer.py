@@ -126,14 +126,14 @@ class TransformerStrategy(BaseStrategy):
             {
                 'utc': candle.time,
                 'open': float(quotation_to_decimal(candle.open)),
+                'close': float(quotation_to_decimal(candle.close)),
                 'high': float(quotation_to_decimal(candle.high)),
                 'low': float(quotation_to_decimal(candle.low)),
-                'close': float(quotation_to_decimal(candle.close)),
                 'volume': candle.volume,
             }
             for candle in candles
         ]
-        df = pd.DataFrame(candles_list, columns=['utc', 'open', 'high', 'low', 'close', 'volume'])
+        df = pd.DataFrame(candles_list, columns=['utc', 'open', 'close', 'high', 'low', 'volume'])
         df['utc'] = pd.to_datetime(df['utc'], utc=True)
         df = df.set_index('utc')
         df['hour'] = df.index.hour
@@ -142,15 +142,15 @@ class TransformerStrategy(BaseStrategy):
         return df
 
     def __normalize(self, tensor):
-        mean = tensor[:, :-3].mean(dim=1, keepdim=True)
-        std = tensor[:, :-3].std(dim=1, keepdim=True)
+        mean = tensor[:, :-3].mean(dim=0, keepdim=True)
+        std = tensor[:, :-3].std(dim=0, keepdim=True)
         epsilon = 1e-7
         normalized_data = (tensor[:, :-3] - mean) / (std + epsilon)
         normalized_data = torch.cat([normalized_data, tensor[:, -3:]], dim=-1)
         normalized_data[..., -3] = normalized_data[..., -3] / 23
         normalized_data[..., -2] = normalized_data[..., -2] / 6 
         normalized_data[..., -1] = normalized_data[..., -1] / 59
-        return normalized_data, mean, std
+        return normalized_data, std, mean
 
     async def get_data(self):
         candles = []
@@ -162,7 +162,7 @@ class TransformerStrategy(BaseStrategy):
         ):
             candles.append(candle)
         df = self.__form_df(candles=candles)
-        tensor = torch.tensor(df.values, dtype=torch.float32)
+        tensor = torch.tensor(df.values, dtype=torch.float32).to(device)
         tensor, std, mean = self.__normalize(tensor[:-1, :])
         tensor = tensor.unsqueeze(dim=0)
         return tensor, std, mean
@@ -172,8 +172,17 @@ class TransformerStrategy(BaseStrategy):
         """
         Decision maker.
         """
+        while now().second != 0:
+            pass
         input, std, mean = await self.get_data()
         self.model.eval()
-        output = self.model(input)
-        print(self.figi)
+        output = self.model(input) * std + mean
+        output = output.squeeze(dim=0)
         print(output)
+        if output[1]-output[0] > 0:
+            await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=50)
+            while now().second != 59:
+                pass
+            await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=50)
+        
+        
