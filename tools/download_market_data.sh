@@ -4,7 +4,7 @@ source ./.env
 
 figi_list=./market_data/figi.txt
 token=$TOKEN
-minimum_year=2023
+minimum_year=2022
 current_year=$(date +%Y)
 url=https://invest-public-api.tinkoff.ru/history-data
 

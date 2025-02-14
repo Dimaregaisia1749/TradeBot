@@ -66,15 +66,10 @@ class CandleTransformer(nn.Module):
         self.out = nn.Sequential(
             nn.Linear(d_model, 32),
             nn.ReLU(),
-            nn.Linear(32, 5)
+            nn.Linear(32, 1)
             )
 
     def forward(self, x):
-        """
-        # prices: [B, 180, 5] (OHLCV)
-        # indicators: [B, 180, 4]
-        # time_feats: [B, 180, 3]
-        """
         x = self.time_enc(x)
         trans_out = self.transformer(x)
         out = self.out(trans_out)
@@ -103,15 +98,13 @@ class TransformerStrategy(BaseStrategy):
         model_dir = 'checkpoints/'
         self.MODEL_PATH = os.path.join(model_dir, 'best.tar')
         self.model = self.__init_model()
-        self.window_size = 240
+        self.window_size = 60
         logger.info("Start TransformerStrategy. figi=%s", self.figi)
 
     def __init_model(self):
         heads = 4
         encoder_layers = 3
         d_model = 128
-        window_size = 240
-        num_workers = 4
         model = CandleTransformer(
             heads=heads,
             encoder_layers=encoder_layers, 
@@ -176,10 +169,10 @@ class TransformerStrategy(BaseStrategy):
             pass
         input, std, mean = await self.get_data()
         self.model.eval()
-        output = self.model(input) * std + mean
+        output = self.model(input)
         output = output.squeeze(dim=0)
         print(output)
-        if output[1]-output[0] > 0:
+        if output > 0:
             await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=50)
             while now().second != 59:
                 pass
