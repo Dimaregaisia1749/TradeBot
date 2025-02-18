@@ -194,7 +194,7 @@ def create_portfolio_visualization(portfolio_df, trades_df):
         template="plotly_white",
         hovermode="x unified",
         height=1000,
-        margin=dict(r=300),  # Место для сводки
+        margin=dict(r=300),
         showlegend=False
     )
     

@@ -24,8 +24,9 @@ from pathlib import Path
 from torch import nn
 import torch
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from sklearn.metrics import accuracy_score, f1_score
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger = logging.getLogger(__name__)
 
 class TimeEncoder(nn.Module):
@@ -66,7 +67,8 @@ class CandleTransformer(nn.Module):
         self.out = nn.Sequential(
             nn.Linear(d_model, 32),
             nn.ReLU(),
-            nn.Linear(32, 1)
+            nn.Linear(32, 1),
+            nn.Sigmoid()
             )
 
     def forward(self, x):
@@ -98,19 +100,22 @@ class TransformerStrategy(BaseStrategy):
         model_dir = 'checkpoints/'
         self.MODEL_PATH = os.path.join(model_dir, 'best.tar')
         self.model = self.__init_model()
-        self.window_size = 60
+        self.window_size = 5
         logger.info("Start TransformerStrategy. figi=%s", self.figi)
+
+        self.pred_dir = []
+        self.actual_dir = []
 
     def __init_model(self):
         heads = 4
         encoder_layers = 3
-        d_model = 128
+        d_model = 256
         model = CandleTransformer(
             heads=heads,
             encoder_layers=encoder_layers, 
             d_model=d_model,
             ).to(device=device)
-        checkpoint = torch.load(self.MODEL_PATH, weights_only=True, map_location=device)
+        checkpoint = torch.load(self.MODEL_PATH, weights_only=False, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         return model
     
@@ -149,9 +154,9 @@ class TransformerStrategy(BaseStrategy):
         candles = []
         async for candle in self.client.get_all_candles(
             figi=self.figi,
-            from_=now() - timedelta(minutes=self.window_size),
+            from_=now() - timedelta(seconds=self.check_interval),
             to=now(),
-            interval=CandleInterval.CANDLE_INTERVAL_1_MIN,
+            interval=self.timeframe
         ):
             candles.append(candle)
         df = self.__form_df(candles=candles)
@@ -165,17 +170,19 @@ class TransformerStrategy(BaseStrategy):
         """
         Decision maker.
         """
-        while now().second != 0:
-            pass
         input, std, mean = await self.get_data()
         self.model.eval()
         output = self.model(input)
         output = output.squeeze(dim=0)
-        print(output)
-        if output > 0:
-            await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=50)
-            while now().second != 59:
-                pass
-            await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=50)
+        self.actual_dir.append(((input.squeeze(dim=0)[0, :][1] - input.squeeze(dim=0)[0, :][0]) >= 0.5).float().cpu())
+        self.pred_dir.append((output >= 0.5).float().cpu())
+        if len(self.actual_dir) > 2:
+            print(self.figi, f'Accuracy: {accuracy_score(self.actual_dir[1:], self.pred_dir[:-1])}')
+        if output >= 0.5:
+            buy_price = await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=50)
+            seconds_to_wait = self.check_interval - now().second
+            await asyncio.sleep(seconds_to_wait)
+            sell_price = await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=50)
+            print(f'figi: {self.figi}. Buy for {buy_price}, Sell for {sell_price}, profit: {sell_price-buy_price}')
         
         

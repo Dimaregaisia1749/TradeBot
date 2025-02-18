@@ -73,6 +73,7 @@ class BaseStrategy:
             account_id=self.account_id
         )
         logger.info("%s lot. figi=%s", 'Buy' if direction == OrderDirection.ORDER_DIRECTION_BUY else 'Sell', self.figi)
+        return float(quotation_to_decimal(order.total_order_amount))
 
     async def trade(self):
         pass
@@ -81,12 +82,15 @@ class BaseStrategy:
         """
         Main cycle for live strategy.
         """
+        while not(now().second == 0 and now().minute % 5 == 0):
+            pass
         while True:
             try:
                 await self.ensure_market_open()
                 await self.trade()
             except AioRequestError as are:
                 logger.error("Client error %s", are)
+            await asyncio.sleep(self.check_interval)
     
     async def get_position_quantity(self) -> int:
         """

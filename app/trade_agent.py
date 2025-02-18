@@ -86,9 +86,9 @@ class TradeAgent:
         return response.instrument.lot
 
     def start(self):
-        timeframe = CandleInterval.CANDLE_INTERVAL_1_MIN
+        timeframe = CandleInterval.CANDLE_INTERVAL_5_MIN
         days_back = 1
-        check_interval = 10 
+        check_interval = 60*5 
         loop = asyncio.get_event_loop()
         signal.signal(signal.SIGINT, lambda s, f: self.handle_signal()) #close console handler
         signal.signal(signal.SIGBREAK, lambda s, f: self.handle_signal())
