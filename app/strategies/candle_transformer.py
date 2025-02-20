@@ -85,7 +85,6 @@ class TransformerStrategy(BaseStrategy):
         self,
         figi: str,
         timeframe: CandleInterval,
-        days_back: int,
         check_interval: int,
         lot: int,
         client: Optional[AsyncServices],
@@ -93,18 +92,18 @@ class TransformerStrategy(BaseStrategy):
         self.account_id = None
         self.figi = figi
         self.timeframe = timeframe
-        self.days_back = days_back
         self.lot = lot
         self.check_interval = check_interval
         self.client = client
         model_dir = 'checkpoints/'
         self.MODEL_PATH = os.path.join(model_dir, 'best.tar')
         self.model = self.__init_model()
-        self.window_size = 5
+        self.window_size = 20
         logger.info("Start TransformerStrategy. figi=%s", self.figi)
 
         self.pred_dir = []
         self.actual_dir = []
+        self.total_profit = 0
 
     def __init_model(self):
         heads = 4
@@ -154,7 +153,7 @@ class TransformerStrategy(BaseStrategy):
         candles = []
         async for candle in self.client.get_all_candles(
             figi=self.figi,
-            from_=now() - timedelta(seconds=self.check_interval),
+            from_=now() - timedelta(seconds=self.window_size*self.check_interval),
             to=now(),
             interval=self.timeframe
         ):
@@ -176,13 +175,13 @@ class TransformerStrategy(BaseStrategy):
         output = output.squeeze(dim=0)
         self.actual_dir.append(((input.squeeze(dim=0)[0, :][1] - input.squeeze(dim=0)[0, :][0]) >= 0.5).float().cpu())
         self.pred_dir.append((output >= 0.5).float().cpu())
-        if len(self.actual_dir) > 2:
-            print(self.figi, f'Accuracy: {accuracy_score(self.actual_dir[1:], self.pred_dir[:-1])}')
         if output >= 0.5:
             buy_price = await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=50)
             seconds_to_wait = self.check_interval - now().second
             await asyncio.sleep(seconds_to_wait)
             sell_price = await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=50)
+            self.total_profit += sell_price-buy_price
             print(f'figi: {self.figi}. Buy for {buy_price}, Sell for {sell_price}, profit: {sell_price-buy_price}')
+            print(f'Total profit: {self.total_profit}')
         
         

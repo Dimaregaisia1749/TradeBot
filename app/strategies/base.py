@@ -18,7 +18,6 @@ class BaseStrategy:
         self,
         figi: str,
         timeframe: CandleInterval,
-        days_back: int,
         check_interval: int,
         lot: int,
         client: Optional[AsyncServices],
@@ -26,7 +25,6 @@ class BaseStrategy:
         self.account_id = None
         self.figi = figi
         self.timeframe = timeframe
-        self.days_back = days_back
         self.lot = lot
         self.check_interval = check_interval
         self.client = client
@@ -61,6 +59,7 @@ class BaseStrategy:
         """
         Place order on buy or sell.
         """
+        await self.ensure_market_open()
         current_amount = await self.get_position_quantity()
         if direction == OrderDirection.ORDER_DIRECTION_SELL and current_amount < quantity:
             logger.info("Can't sell lot. figi=%s. Current amount:%s lower than sell amount:%s", self.figi, current_amount, quantity)

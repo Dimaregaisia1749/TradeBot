@@ -47,7 +47,7 @@ class TradeAgent:
         asyncio.get_running_loop().stop()
         sys.exit(1)
 
-    async def run_strategies(self, portfolio, timeframe, days_back, check_interval):
+    async def run_strategies(self, portfolio, timeframe, check_interval):
         """
         From this function starts
         strategy for every ticker from portfolio.
@@ -70,7 +70,6 @@ class TradeAgent:
                     figi=figi,
                     timeframe=timeframe,
                     check_interval=check_interval,
-                    days_back=days_back,
                     lot=lot,
                     client=client
                 )
@@ -87,7 +86,6 @@ class TradeAgent:
 
     def start(self):
         timeframe = CandleInterval.CANDLE_INTERVAL_5_MIN
-        days_back = 1
         check_interval = 60*5 
         loop = asyncio.get_event_loop()
         signal.signal(signal.SIGINT, lambda s, f: self.handle_signal()) #close console handler
@@ -96,7 +94,6 @@ class TradeAgent:
             self.run_strategies(
                 portfolio=self.portfolio,
                 timeframe=timeframe,
-                days_back=days_back,
                 check_interval=check_interval,
             )
         )
