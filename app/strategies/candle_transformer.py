@@ -169,7 +169,7 @@ class TransformerStrategy(BaseStrategy):
         """
         Decision maker.
         """
-        quantity = 5
+        quantity = 20
         input, std, mean = await self.get_data()
         self.model.eval()
         output = self.model(input)
