@@ -46,6 +46,8 @@ class BaseStrategy:
             trading_status = await self.client.market_data.get_trading_status(
                 figi=self.figi
             )
+            while not(now().second == 0 and now().minute % 5 == 0): #wait till next candle start
+                pass
     
     async def get_price(self):
         """
@@ -72,7 +74,7 @@ class BaseStrategy:
             account_id=self.account_id
         )
         logger.info("%s lot. figi=%s", 'Buy' if direction == OrderDirection.ORDER_DIRECTION_BUY else 'Sell', self.figi)
-        return float(quotation_to_decimal(order.total_order_amount))
+        return order
 
     async def trade(self):
         pass

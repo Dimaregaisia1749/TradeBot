@@ -98,7 +98,7 @@ class TransformerStrategy(BaseStrategy):
         model_dir = 'checkpoints/'
         self.MODEL_PATH = os.path.join(model_dir, 'best.tar')
         self.model = self.__init_model()
-        self.window_size = 20
+        self.window_size = 5
         logger.info("Start TransformerStrategy. figi=%s", self.figi)
 
         self.pred_dir = []
@@ -107,7 +107,7 @@ class TransformerStrategy(BaseStrategy):
 
     def __init_model(self):
         heads = 4
-        encoder_layers = 3
+        encoder_layers = 4
         d_model = 256
         model = CandleTransformer(
             heads=heads,
@@ -169,6 +169,7 @@ class TransformerStrategy(BaseStrategy):
         """
         Decision maker.
         """
+        quantity = 5
         input, std, mean = await self.get_data()
         self.model.eval()
         output = self.model(input)
@@ -176,12 +177,18 @@ class TransformerStrategy(BaseStrategy):
         self.actual_dir.append(((input.squeeze(dim=0)[0, :][1] - input.squeeze(dim=0)[0, :][0]) >= 0.5).float().cpu())
         self.pred_dir.append((output >= 0.5).float().cpu())
         if output >= 0.5:
-            buy_price = await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=50)
-            seconds_to_wait = self.check_interval - now().second
+            buy_order = await self.place_order(OrderDirection.ORDER_DIRECTION_BUY, quantity=quantity)
+            seconds_to_wait = self.check_interval - now().second - 1
             await asyncio.sleep(seconds_to_wait)
-            sell_price = await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=50)
-            self.total_profit += sell_price-buy_price
-            print(f'figi: {self.figi}. Buy for {buy_price}, Sell for {sell_price}, profit: {sell_price-buy_price}')
-            print(f'Total profit: {self.total_profit}')
+            sell_order = await self.place_order(OrderDirection.ORDER_DIRECTION_SELL, quantity=quantity)
+            buy_price = float(quotation_to_decimal(buy_order.executed_order_price)) * quantity
+            sell_price = float(quotation_to_decimal(sell_order.executed_order_price)) * quantity
+            buy_comission = float(quotation_to_decimal(buy_order.executed_commission))
+            sell_comission = float(quotation_to_decimal(sell_order.executed_commission))
+            profit = sell_price - buy_price
+            profit_with_comission =  profit - buy_comission - sell_comission
+            self.total_profit += profit_with_comission
+            print(f'Figi: {self.figi}. Buy for {buy_price}, Sell for {sell_price}, profit: {profit}, profit with commison" {profit_with_comission}')
+        print(f'Figi: {self.figi} Total profit: {self.total_profit}, accuracy: {accuracy_score(self.actual_dir, self.pred_dir)}')
         
         

@@ -3,14 +3,6 @@
         "sber": {
             "figi": "BBG004730N88",
             "strategy": "transformer"
-        },
-        "gazp": {
-            "figi": "BBG004730RP0",
-            "strategy": "transformer"
-        },
-        "gmkn": {
-            "figi": "BBG00475KKY8",
-            "strategy": "transformer"
         }
     }
 }
