@@ -46,8 +46,7 @@ class BaseStrategy:
             trading_status = await self.client.market_data.get_trading_status(
                 figi=self.figi
             )
-            while not(now().second == 0 and now().minute % 5 == 0): #wait till next candle start
-                pass
+
     
     async def get_price(self):
         """
@@ -83,11 +82,11 @@ class BaseStrategy:
         """
         Main cycle for live strategy.
         """
-        while not(now().second == 0 and now().minute % 5 == 0):
-            pass
         while True:
             try:
                 await self.ensure_market_open()
+                while not(now().second == 0 and now().minute % 5 == 0):
+                    pass
                 await self.trade()
             except AioRequestError as are:
                 logger.error("Client error %s", are)

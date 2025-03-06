@@ -41,7 +41,7 @@ def main():
 
         account_id = sandbox_account.account_id
 
-        print(add_money_sandbox(client=client, account_id=account_id, money=10000))
+        print(add_money_sandbox(client=client, account_id=account_id, money=100000))
 
 
 if __name__ == "__main__":

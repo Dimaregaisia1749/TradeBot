@@ -98,16 +98,17 @@ class TransformerStrategy(BaseStrategy):
         model_dir = 'checkpoints/'
         self.MODEL_PATH = os.path.join(model_dir, 'best.tar')
         self.model = self.__init_model()
-        self.window_size = 5
+        self.window_size = 15
         logger.info("Start TransformerStrategy. figi=%s", self.figi)
 
         self.pred_dir = []
         self.actual_dir = []
         self.total_profit = 0
+        self.total_profit_with_comission = 0
 
     def __init_model(self):
         heads = 4
-        encoder_layers = 4
+        encoder_layers = 3
         d_model = 256
         model = CandleTransformer(
             heads=heads,
@@ -160,7 +161,10 @@ class TransformerStrategy(BaseStrategy):
             candles.append(candle)
         df = self.__form_df(candles=candles)
         tensor = torch.tensor(df.values, dtype=torch.float32).to(device)
-        tensor, std, mean = self.__normalize(tensor[:-1, :])
+        try:
+            tensor, std, mean = self.__normalize(tensor[:-1, :])
+        except:
+            print(candles)
         tensor = tensor.unsqueeze(dim=0)
         return tensor, std, mean
 
@@ -187,8 +191,9 @@ class TransformerStrategy(BaseStrategy):
             sell_comission = float(quotation_to_decimal(sell_order.executed_commission))
             profit = sell_price - buy_price
             profit_with_comission =  profit - buy_comission - sell_comission
-            self.total_profit += profit_with_comission
-            print(f'Figi: {self.figi}. Buy for {buy_price}, Sell for {sell_price}, profit: {profit}, profit with commison" {profit_with_comission}')
-        print(f'Figi: {self.figi} Total profit: {self.total_profit}, accuracy: {accuracy_score(self.actual_dir, self.pred_dir)}')
+            self.total_profit_with_comission += profit_with_comission
+            self.total_profit += profit
+            logger.info('Figi: %s. Buy for %s, Sell for %s, profit: %s, profit with commison: %s', self.figi, buy_price, sell_price, profit, profit_with_comission)
+        
         
         
